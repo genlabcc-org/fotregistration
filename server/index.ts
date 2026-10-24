@@ -26,17 +26,31 @@ initDatabase();
 initSupabaseAdminRealtime();
 
 // Security & Middleware
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5000,http://127.0.0.1:5173,http://127.0.0.1:5000')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean);
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5000',
+  'https://fotregistration.genlab.cc',
+  'https://fot-regist.vercel.app',
+];
+
+const allowedOrigins = Array.from(
+  new Set([
+    ...defaultOrigins,
+    ...(process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean),
+  ])
+);
 
 app.use(cors({
   origin: (origin, callback) => {
     const isLocalhost = Boolean(origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
     const isVercel = Boolean(origin && origin.endsWith('.vercel.app'));
+    const isGenlab = Boolean(origin && (origin.endsWith('.genlab.cc') || origin === 'https://genlab.cc'));
 
-    if (!origin || isLocalhost || isVercel || allowedOrigins.includes(origin)) {
+    if (!origin || isLocalhost || isVercel || isGenlab || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Blocked by CORS policy: Origin ${origin} not allowed.`));
