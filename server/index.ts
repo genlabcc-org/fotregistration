@@ -106,6 +106,18 @@ app.post('/api/verify-payment', (req: Request, res: Response, next: NextFunction
   paymentRoutes(req, res, next);
 });
 
+// Root endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    message: '⚡ Friends of Tech (FOT) API Server is live and healthy.',
+    health: '/api/health',
+    event: '/api/event',
+    payment: '/api/payment/config',
+    frontend: 'https://fotregistration.genlab.cc',
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', time: new Date().toISOString(), platform: 'FOT Platform' });
