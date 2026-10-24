@@ -33,8 +33,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
 }));
 
-// Preflight handler for all routes
-app.options('*', cors());
+// Preflight handler for all routes (Express 5 compatible)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
 
 // HTTP Security Headers (OWASP Recommended)
 app.use((_req: Request, res: Response, next: NextFunction) => {
