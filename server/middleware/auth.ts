@@ -9,6 +9,49 @@ function getJwtSecret(): string {
   return secret;
 }
 
+// In-memory token revocation blacklist for explicit logout invalidation
+interface RevokedTokenEntry {
+  revokedAt: number;
+  expiresAt: number;
+}
+
+const revokedTokens = new Map<string, RevokedTokenEntry>();
+
+// Prune expired entries from the revocation store every 30 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, record] of revokedTokens.entries()) {
+    if (now > record.expiresAt) {
+      revokedTokens.delete(token);
+    }
+  }
+}, 30 * 60 * 1000).unref();
+
+/**
+ * Explicitly revokes a JWT token upon logout
+ */
+export function revokeToken(token: string): void {
+  if (!token) return;
+  try {
+    const secret = getJwtSecret();
+    const decoded = jwt.decode(token) as { exp?: number } | null;
+    const now = Date.now();
+    const expiresAt = decoded?.exp ? decoded.exp * 1000 : now + 24 * 60 * 60 * 1000;
+    revokedTokens.set(token, { revokedAt: now, expiresAt });
+  } catch {
+    // If decoding fails, still record standard 24h retention
+    revokedTokens.set(token, { revokedAt: Date.now(), expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+  }
+}
+
+/**
+ * Checks if a token has been explicitly invalidated upon logout
+ */
+export function isTokenRevoked(token: string): boolean {
+  if (!token) return true;
+  return revokedTokens.has(token);
+}
+
 export interface AuthenticatedRequest extends Request {
   admin?: {
     id: number;
@@ -29,6 +72,11 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
 
   if (!token) {
     res.status(401).json({ error: 'Unauthorized. Admin session token missing.' });
+    return;
+  }
+
+  if (isTokenRevoked(token)) {
+    res.status(401).json({ error: 'Session invalidated. Please sign in again.' });
     return;
   }
 
@@ -61,6 +109,11 @@ export function requireUser(req: AuthenticatedUserRequest, res: Response, next: 
     return;
   }
 
+  if (isTokenRevoked(token)) {
+    res.status(401).json({ error: 'Session invalidated. Please sign in again.' });
+    return;
+  }
+
   try {
     const secret = getJwtSecret();
     const decoded = jwt.verify(token, secret) as { id: string; email: string; name: string; role?: string };
@@ -82,10 +135,11 @@ export function requireUser(req: AuthenticatedUserRequest, res: Response, next: 
   }
 }
 
+// Strict JWT Token generation with < 24h expiration limit (12 hours)
 export function signAdminToken(admin: { id: number; email: string }): string {
-  return jwt.sign({ id: admin.id, email: admin.email, role: 'admin' }, getJwtSecret(), { expiresIn: '7d' });
+  return jwt.sign({ id: admin.id, email: admin.email, role: 'admin' }, getJwtSecret(), { expiresIn: '12h' });
 }
 
 export function signUserToken(user: { id: string; email: string; name: string }): string {
-  return jwt.sign({ id: user.id, email: user.email, name: user.name, role: 'user' }, getJwtSecret(), { expiresIn: '14d' });
+  return jwt.sign({ id: user.id, email: user.email, name: user.name, role: 'user' }, getJwtSecret(), { expiresIn: '12h' });
 }

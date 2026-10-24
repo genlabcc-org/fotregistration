@@ -86,7 +86,12 @@ export const StepPaymentRazorpay: React.FC<StepPaymentRazorpayProps> = ({
       }
 
       // 4. Launch Razorpay Standard Checkout
-      const effectiveKeyId = order.key_id || order.keyId || razorpayConfig.keyId;
+      const effectiveKeyId =
+        order.key_id ||
+        order.keyId ||
+        razorpayConfig.keyId ||
+        (import.meta.env.VITE_RAZORPAY_KEY_ID as string) ||
+        '';
       if (!effectiveKeyId) {
         throw new Error('Razorpay Key ID is not configured.');
       }

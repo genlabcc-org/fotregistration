@@ -4,9 +4,36 @@ services:
     env: node
     plan: free
     buildCommand: npm install
-    startCommand: npm run server
+    startCommand: npm run start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: TOKEN_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:5173,http://localhost:5000,http://127.0.0.1:5173,http://127.0.0.1:5000,https://fot-regist.vercel.app
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+

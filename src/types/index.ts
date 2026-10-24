@@ -8,6 +8,8 @@ export interface AttendeeInput {
   email: string;
   phone: string;
   category: AttendeeCategory;
+  team_name?: string;
+  team_id?: string;
 }
 
 export interface Attendee {
@@ -157,12 +159,17 @@ export interface ScannedAttendeeInfo {
   assigned_category?: string;
   team?: string | null;
   team_identifier?: string | null;
+  registrationId?: string;
+  status?: string;
 }
 
 export interface ScannerScanResult {
-  status: 'VALID' | 'ALREADY_CHECKED_IN' | 'INVALID';
+  status: 'VALID' | 'ALREADY_CHECKED_IN' | 'INVALID' | 'PENDING_PAYMENT' | 'REJECTED';
   message: string;
   attendee?: ScannedAttendeeInfo;
   scannedAt?: string;
   checkInId?: number;
+  canQuickConfirm?: boolean;
+  registrationId?: string;
+  error?: string;
 }

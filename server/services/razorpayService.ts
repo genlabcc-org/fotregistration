@@ -45,7 +45,7 @@ export class RazorpayService {
     const key_id = this.getKeyId();
     const key_secret = this.getKeySecret();
     if (!key_id || !key_secret) {
-      const error: any = new Error('Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
+      const error: any = new Error('Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment variables (Render Dashboard or .env)');
       error.statusCode = 401;
       throw error;
     }
@@ -66,7 +66,7 @@ export class RazorpayService {
     const key_secret = this.getKeySecret();
 
     if (!key_id || !key_secret) {
-      const error: any = new Error('Razorpay API credentials missing. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env');
+      const error: any = new Error('Razorpay API credentials missing. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in your environment variables (Render Dashboard or .env)');
       error.statusCode = 401;
       throw error;
     }

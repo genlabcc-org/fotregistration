@@ -41,16 +41,16 @@ export const PublicNavbar: React.FC = () => {
       <div
         className={`w-full max-w-6xl mx-auto rounded-full px-5 py-3 flex items-center justify-between transition-all duration-300 ${
           isScrolled
-            ? 'bg-[#FFFFFF]/95 backdrop-blur-md border border-[#E6E6DF] shadow-studio'
-            : 'bg-[#FFFFFF]/80 backdrop-blur-sm border border-[#E6E6DF]/80'
+            ? 'bg-surface/95 backdrop-blur-md border border-hairline shadow-luxury'
+            : 'bg-surface/80 backdrop-blur-sm border border-hairline/80 shadow-xs'
         }`}
       >
         {/* Brand Logo & Presenter */}
         <Link to="/" className="flex items-center gap-3 group">
-          <span className="font-display text-2xl font-bold tracking-tight text-[#0A0A0A]">
+          <span className="font-display text-2xl font-bold tracking-tight text-ink">
             FOT<span className="text-[#C2E600]">.</span>
           </span>
-          <span className="text-xs text-[#8C8C85] font-medium pl-3 border-l border-[#E6E6DF] hidden sm:inline-block">
+          <span className="text-xs text-muted font-medium pl-3 border-l border-hairline hidden sm:inline-block">
             Presented by GenLab
           </span>
         </Link>
@@ -94,7 +94,7 @@ export const PublicNavbar: React.FC = () => {
           <Link
             to="/register"
             data-cursor="Register"
-            className="h-10 px-5 rounded-xl bg-[#0A0A0A] text-[#FFFFFF] text-xs font-semibold inline-flex items-center gap-2 hover:bg-[#262626] transition-all group shadow-sm"
+            className="h-10 px-5 rounded-xl bg-ink text-canvas text-xs font-semibold inline-flex items-center gap-2 hover:opacity-90 transition-all group shadow-sm btn-luxury-glow"
           >
             <span>Register</span>
             <span className="w-5 h-5 rounded-full bg-[#C2E600] text-[#0A0A0A] flex items-center justify-center transition-transform group-hover:translate-x-0.5">

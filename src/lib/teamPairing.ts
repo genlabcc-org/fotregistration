@@ -3,6 +3,7 @@ import type { AttendeeInput } from '../types';
 export interface TeamGroup {
   teamNumber: number;
   teamIdentifier: string;
+  teamName?: string;
   members: AttendeeInput[];
 }
 
@@ -26,18 +27,57 @@ export function computePairing(attendees: AttendeeInput[]): ComputedTeamPairing 
   const convertedSolos: AttendeeInput[] = [];
   let oddPersonId: string | null = null;
 
+  // Group by team_id if available, otherwise pair sequentially
+  const teamIdMap = new Map<string, AttendeeInput[]>();
+  const unassignedTeam: AttendeeInput[] = [];
+
+  for (const att of teamAttendees) {
+    if (att.team_id) {
+      const list = teamIdMap.get(att.team_id) || [];
+      list.push(att);
+      teamIdMap.set(att.team_id, list);
+    } else {
+      unassignedTeam.push(att);
+    }
+  }
+
   let teamIndex = 1;
-  for (let i = 0; i < teamAttendees.length; i += 2) {
-    if (i + 1 < teamAttendees.length) {
+
+  // Process grouped teams
+  for (const [, members] of teamIdMap.entries()) {
+    for (let i = 0; i < members.length; i += 2) {
+      if (i + 1 < members.length) {
+        const customName = members[i].team_name?.trim() || members[i + 1].team_name?.trim();
+        const teamIdentifier = customName || `Team ${String(teamIndex).padStart(2, '0')}`;
+        teams.push({
+          teamNumber: teamIndex,
+          teamIdentifier,
+          teamName: customName || undefined,
+          members: [members[i], members[i + 1]],
+        });
+        teamIndex++;
+      } else {
+        const odd = members[i];
+        oddPersonId = odd.id;
+        convertedSolos.push(odd);
+      }
+    }
+  }
+
+  // Process unassigned team attendees
+  for (let i = 0; i < unassignedTeam.length; i += 2) {
+    if (i + 1 < unassignedTeam.length) {
+      const customName = unassignedTeam[i].team_name?.trim() || unassignedTeam[i + 1].team_name?.trim();
+      const teamIdentifier = customName || `Team ${String(teamIndex).padStart(2, '0')}`;
       teams.push({
         teamNumber: teamIndex,
-        teamIdentifier: `TEAM ${String(teamIndex).padStart(2, '0')}`,
-        members: [teamAttendees[i], teamAttendees[i + 1]],
+        teamIdentifier,
+        teamName: customName || undefined,
+        members: [unassignedTeam[i], unassignedTeam[i + 1]],
       });
       teamIndex++;
     } else {
-      // Odd one out: converted to SOLO
-      const odd = teamAttendees[i];
+      const odd = unassignedTeam[i];
       oddPersonId = odd.id;
       convertedSolos.push(odd);
     }

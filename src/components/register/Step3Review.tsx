@@ -63,13 +63,21 @@ export const Step3Review: React.FC<Step3ReviewProps> = ({
             <div className="space-y-3 mb-4">
               {pairingResult.teams.map((team) => (
                 <div key={team.teamNumber} className="p-5 rounded-xl bg-[#FAFAF7] border border-[#E6E6DF]">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#0A0A0A] mb-3">
-                    <IconUsers size={15} />
-                    <span>Team {team.teamNumber} (2 People)</span>
+                  <div className="flex items-center justify-between text-xs font-bold text-[#0A0A0A] mb-3">
+                    <div className="flex items-center gap-2">
+                      <IconUsers size={15} />
+                      <span>{team.teamName ? `${team.teamName} · 2 People` : `${team.teamIdentifier} · 2 People`}</span>
+                    </div>
+                    <span className="text-[11px] font-mono font-bold text-[#0A0A0A] bg-[#FFFFFF] border border-[#E6E6DF] px-2.5 py-0.5 rounded-full">
+                      Team Pass
+                    </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {team.members.map((m) => (
+                    {team.members.map((m, idx) => (
                       <div key={m.id} className="space-y-0.5 p-3 rounded-lg bg-[#FFFFFF] border border-[#E6E6DF]">
+                        <div className="text-[10px] uppercase font-mono font-bold text-[#8C8C85]">
+                          {idx === 0 ? 'Person 1 (Primary / Lead)' : 'Person 2'}
+                        </div>
                         <div className="text-[#0A0A0A] font-bold">{m.name}</div>
                         <div className="text-[#55554F]">{m.email} · +91 {m.phone}</div>
                       </div>

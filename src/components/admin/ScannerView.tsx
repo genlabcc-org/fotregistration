@@ -21,11 +21,32 @@ export const ScannerView: React.FC = () => {
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
+  const [isQuickConfirming, setIsQuickConfirming] = useState(false);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const lastScannedRef = useRef<{ code: string; time: number }>({ code: '', time: 0 });
   const isTransitioningRef = useRef(false);
+
+  const handleQuickConfirm = async () => {
+    if (!scanResult?.registrationId) return;
+    setIsQuickConfirming(true);
+    try {
+      const result = await api.quickConfirmScanner({
+        registrationId: scanResult.registrationId,
+        attendeeId: scanResult.attendee?.id,
+      });
+      setScanResult(result);
+      setRecentScans((prev) => [result, ...prev.slice(0, 19)]);
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([80, 40, 80]);
+      }
+    } catch (err: unknown) {
+      alert((err as Error).message || 'Failed to approve registration.');
+    } finally {
+      setIsQuickConfirming(false);
+    }
+  };
 
   const handleProcessCode = useCallback(async (rawText: string) => {
     const cleanText = rawText.trim();
@@ -41,7 +62,7 @@ export const ScannerView: React.FC = () => {
 
     try {
       let payload: { token?: string; manualCode?: string } = {};
-      if (cleanText.startsWith('{') || cleanText.includes('.')) {
+      if (cleanText.includes('.') && cleanText.length > 50 && !cleanText.includes(' ') && !cleanText.startsWith('http')) {
         payload = { token: cleanText };
       } else {
         payload = { manualCode: cleanText };
@@ -58,7 +79,7 @@ export const ScannerView: React.FC = () => {
     } catch (err: unknown) {
       const fallbackResult: ScannerScanResult = {
         status: 'INVALID',
-        message: (err as Error).message || 'Invalid pass. Not issued by FOT.',
+        message: (err as Error).message || 'Pass not found or network error.',
       };
       setScanResult(fallbackResult);
       setRecentScans((prev) => [fallbackResult, ...prev.slice(0, 19)]);
@@ -477,10 +498,10 @@ export const ScannerView: React.FC = () => {
             <form onSubmit={handleManualSubmit} className="flex gap-2">
               <input
                 type="text"
-                placeholder="e.g. FOT-0001"
+                placeholder="e.g. FOT-0001, email, phone, or ATT ID"
                 value={manualCode}
-                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                className="field-input flex-1 font-mono text-xs uppercase"
+                onChange={(e) => setManualCode(e.target.value)}
+                className="field-input flex-1 text-xs"
               />
               <button
                 type="submit"
@@ -503,6 +524,8 @@ export const ScannerView: React.FC = () => {
                   ? 'bg-[#F0FDF4] border-[#10B981]'
                   : scanResult.status === 'ALREADY_CHECKED_IN'
                   ? 'bg-[#FFFBEB] border-[#F59E0B]'
+                  : scanResult.status === 'PENDING_PAYMENT'
+                  ? 'bg-[#FEFCE8] border-[#EAB308]'
                   : 'bg-[#FFF5F5] border-[#E53935]'
               }`}
             >
@@ -518,7 +541,12 @@ export const ScannerView: React.FC = () => {
                       <IconClock size={18} />
                     </span>
                   )}
-                  {scanResult.status === 'INVALID' && (
+                  {scanResult.status === 'PENDING_PAYMENT' && (
+                    <span className="w-8 h-8 rounded-full bg-[#EAB308] text-white flex items-center justify-center">
+                      <IconClock size={18} />
+                    </span>
+                  )}
+                  {(scanResult.status === 'INVALID' || scanResult.status === 'REJECTED') && (
                     <span className="w-8 h-8 rounded-full bg-[#E53935] text-white flex items-center justify-center">
                       <IconAlertCircle size={18} />
                     </span>
@@ -529,6 +557,10 @@ export const ScannerView: React.FC = () => {
                       ? 'Admit Attendee'
                       : scanResult.status === 'ALREADY_CHECKED_IN'
                       ? 'Already Checked In'
+                      : scanResult.status === 'PENDING_PAYMENT'
+                      ? 'Registration Pending Approval'
+                      : scanResult.status === 'REJECTED'
+                      ? 'Registration Rejected'
                       : 'Entry Denied'}
                   </span>
                 </div>
@@ -558,10 +590,23 @@ export const ScannerView: React.FC = () => {
                   <div className="pt-2 border-t border-[#E6E6DF] flex items-center justify-between text-[11px]">
                     <span className="text-[#8C8C85]">Format:</span>
                     <span className="font-bold text-[#0A0A0A]">
-                      {scanResult.attendee.team_identifier ? scanResult.attendee.team_identifier : 'Solo'}
+                      {scanResult.attendee.team_identifier || scanResult.attendee.team || 'Solo'}
                     </span>
                   </div>
                 </div>
+              )}
+
+              {/* Quick Confirm & Admit button if registration is pending */}
+              {scanResult.status === 'PENDING_PAYMENT' && scanResult.registrationId && (
+                <button
+                  type="button"
+                  onClick={handleQuickConfirm}
+                  disabled={isQuickConfirming}
+                  className="w-full py-3 px-4 rounded-xl bg-[#0A0A0A] hover:bg-[#222222] text-[#FAFAF7] text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <IconCheck size={14} className="text-[#C2E600]" />
+                  <span>{isQuickConfirming ? 'Approving & Admitting...' : 'Approve Payment & Admit Attendee'}</span>
+                </button>
               )}
             </div>
           ) : (
@@ -602,10 +647,12 @@ export const ScannerView: React.FC = () => {
                           ? 'bg-[#F0FDF4] text-[#10B981] border border-[#10B981]/20'
                           : scan.status === 'ALREADY_CHECKED_IN'
                           ? 'bg-[#FFFBEB] text-[#F59E0B] border border-[#F59E0B]/20'
+                          : scan.status === 'PENDING_PAYMENT'
+                          ? 'bg-[#FEFCE8] text-[#CA8A04] border border-[#CA8A04]/20'
                           : 'bg-[#FFF5F5] text-[#E53935] border border-[#E53935]/20'
                       }`}
                     >
-                      {scan.status}
+                      {scan.status === 'PENDING_PAYMENT' ? 'PENDING' : scan.status}
                     </span>
                   </div>
                 ))

@@ -200,6 +200,12 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  quickConfirmScanner: (payload: { registrationId: string; attendeeId?: string }) =>
+    request<ScannerScanResult>('/api/scanner/quick-confirm', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   getCheckInsHistory: () =>
     request<{ checkIns: unknown[] }>('/api/scanner/history'),
 

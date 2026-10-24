@@ -9,6 +9,7 @@ import {
   requireUser,
   signUserToken,
   AuthenticatedUserRequest,
+  revokeToken,
 } from '../middleware/auth';
 import {
   createRateLimiter,
@@ -119,8 +120,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   res.cookie('fot_admin_token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    sameSite: 'strict',
+    maxAge: 12 * 60 * 60 * 1000, // 12 hours (< 24h limit)
   });
 
   res.json({
@@ -149,8 +150,16 @@ router.get('/me', requireAdmin, (req: AuthenticatedRequest, res: Response): void
 });
 
 router.post('/logout', (req: Request, res: Response): void => {
-  res.clearCookie('fot_admin_token');
-  res.json({ success: true, message: 'Logged out successfully.' });
+  const token = req.cookies?.fot_admin_token || req.headers.authorization?.split(' ')[1];
+  if (token) {
+    revokeToken(token);
+  }
+  res.clearCookie('fot_admin_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.json({ success: true, message: 'Logged out and admin session invalidated successfully.' });
 });
 
 router.post('/forgot-password', (req: Request, res: Response): void => {

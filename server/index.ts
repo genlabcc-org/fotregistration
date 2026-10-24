@@ -33,7 +33,10 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,ht
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
+    const isLocalhost = Boolean(origin && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+    const isVercel = Boolean(origin && origin.endsWith('.vercel.app'));
+
+    if (!origin || isLocalhost || isVercel || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Blocked by CORS policy: Origin ${origin} not allowed.`));

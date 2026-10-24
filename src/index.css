@@ -38,14 +38,38 @@
 :root {
   --canvas: #FAFAF7;
   --surface: #FFFFFF;
+  --surface-raised: #F8F8F5;
   --sunken: #F2F2EC;
   --ink: #0A0A0A;
+  --ink-secondary: #2C2C28;
   --body: #55554F;
   --muted: #8C8C85;
   --hairline: #E6E6DF;
   --lime: #C2E600;
+  --gold: #D4AF37;
+  --champagne: #F5E6BE;
   --shadow-soft: 0 1px 2px rgba(10, 10, 10, 0.04), 0 12px 32px rgba(10, 10, 10, 0.06);
   --shadow-card: 0 1px 3px rgba(10, 10, 10, 0.04), 0 6px 16px rgba(10, 10, 10, 0.04);
+  --shadow-luxury: 0 4px 20px -2px rgba(10, 10, 10, 0.05), 0 12px 32px -4px rgba(10, 10, 10, 0.08);
+}
+
+[data-theme="dark"],
+.dark {
+  --canvas: #0F0F0F;
+  --surface: #171717;
+  --surface-raised: #1F1F1F;
+  --sunken: #141414;
+  --ink: #FAFAF7;
+  --ink-secondary: #E6E6DF;
+  --body: #A0A09A;
+  --muted: #72726C;
+  --hairline: #292929;
+  --lime: #C2E600;
+  --gold: #E5C378;
+  --champagne: #2A2416;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-luxury: 0 4px 24px -2px rgba(0, 0, 0, 0.5), 0 16px 40px -4px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -53,20 +77,53 @@
 }
 
 html {
-  background-color: #FAFAF7;
-  color: #0A0A0A;
+  background-color: var(--canvas);
+  color: var(--ink);
   font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {
-  background-color: #FAFAF7;
-  color: #0A0A0A;
+  background-color: var(--canvas);
+  color: var(--ink);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  transition: background-color 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Skeleton Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--sunken) 25%,
+    var(--surface-raised) 37%,
+    var(--sunken) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* Luxury Glow Utility */
+.btn-luxury-glow {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-luxury-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(194, 230, 0, 0.35), 0 0 16px rgba(212, 175, 55, 0.25);
 }
 
 /* Studio Scrollbar */
@@ -109,28 +166,28 @@ body {
 
 /* Hairlines */
 .hairline-b {
-  border-bottom: 1px solid #E6E6DF;
+  border-bottom: 1px solid var(--hairline);
 }
 .hairline-t {
-  border-top: 1px solid #E6E6DF;
+  border-top: 1px solid var(--hairline);
 }
 .hairline-l {
-  border-left: 1px solid #E6E6DF;
+  border-left: 1px solid var(--hairline);
 }
 .hairline-r {
-  border-right: 1px solid #E6E6DF;
+  border-right: 1px solid var(--hairline);
 }
 .hairline-all {
-  border: 1px solid #E6E6DF;
+  border: 1px solid var(--hairline);
 }
 
 /* Studio Soft Shadows */
 .shadow-studio {
-  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04), 0 12px 32px rgba(10, 10, 10, 0.06);
+  box-shadow: var(--shadow-luxury);
 }
 
 .shadow-card-subtle {
-  box-shadow: 0 1px 3px rgba(10, 10, 10, 0.04), 0 6px 16px rgba(10, 10, 10, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 /* 52px Form Input Standard */
@@ -138,11 +195,11 @@ body {
 .fot-input {
   width: 100%;
   height: 52px;
-  background-color: #F2F2EC;
-  border: 1px solid #E6E6DF;
+  background-color: var(--sunken);
+  border: 1px solid var(--hairline);
   border-radius: 12px;
   padding: 0 1rem;
-  color: #0A0A0A;
+  color: var(--ink);
   font-size: 0.9375rem;
   font-family: 'Satoshi', sans-serif;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
@@ -151,14 +208,14 @@ body {
 .field-input:focus,
 .fot-input:focus {
   outline: none;
-  background-color: #FFFFFF;
-  border-color: #0A0A0A;
+  background-color: var(--surface);
+  border-color: var(--ink);
   box-shadow: 0 0 0 3px rgba(194, 230, 0, 0.45);
 }
 
 .field-input::placeholder,
 .fot-input::placeholder {
-  color: #8C8C85;
+  color: var(--muted);
 }
 
 textarea.field-input,

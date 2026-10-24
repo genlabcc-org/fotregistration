@@ -15,6 +15,8 @@ interface AttendeePayload {
   email: string;
   phone: string;
   category: 'SOLO' | 'TEAM';
+  team_name?: string;
+  team_id?: string;
 }
 
 // Rate limiter for public registration submissions (prevents spam and storage exhaustion)
@@ -184,15 +186,44 @@ router.post('/', upload.single('screenshot'), (req: Request, res: Response): voi
     }[] = [];
 
     let teamCounter = 1;
-    for (let i = 0; i < teamAttendees.length; i += 2) {
-      if (i + 1 < teamAttendees.length) {
-        const teamName = `Team ${String(teamCounter).padStart(2, '0')}`;
-        pairedList.push({ payload: teamAttendees[i], assignedCategory: 'TEAM', teamIdentifier: teamName });
-        pairedList.push({ payload: teamAttendees[i + 1], assignedCategory: 'TEAM', teamIdentifier: teamName });
+    const teamIdMap = new Map<string, AttendeePayload[]>();
+    const ungroupedTeam: AttendeePayload[] = [];
+
+    for (const t of teamAttendees) {
+      if (t.team_id) {
+        const list = teamIdMap.get(t.team_id) || [];
+        list.push(t);
+        teamIdMap.set(t.team_id, list);
+      } else {
+        ungroupedTeam.push(t);
+      }
+    }
+
+    // Process grouped teams
+    for (const [, members] of teamIdMap.entries()) {
+      for (let i = 0; i < members.length; i += 2) {
+        if (i + 1 < members.length) {
+          const customName = members[i].team_name?.trim() || members[i + 1].team_name?.trim();
+          const teamName = customName || `Team ${String(teamCounter).padStart(2, '0')}`;
+          pairedList.push({ payload: members[i], assignedCategory: 'TEAM', teamIdentifier: teamName });
+          pairedList.push({ payload: members[i + 1], assignedCategory: 'TEAM', teamIdentifier: teamName });
+          teamCounter++;
+        } else {
+          pairedList.push({ payload: members[i], assignedCategory: 'SOLO', teamIdentifier: null });
+        }
+      }
+    }
+
+    // Process ungrouped teams
+    for (let i = 0; i < ungroupedTeam.length; i += 2) {
+      if (i + 1 < ungroupedTeam.length) {
+        const customName = ungroupedTeam[i].team_name?.trim() || ungroupedTeam[i + 1].team_name?.trim();
+        const teamName = customName || `Team ${String(teamCounter).padStart(2, '0')}`;
+        pairedList.push({ payload: ungroupedTeam[i], assignedCategory: 'TEAM', teamIdentifier: teamName });
+        pairedList.push({ payload: ungroupedTeam[i + 1], assignedCategory: 'TEAM', teamIdentifier: teamName });
         teamCounter++;
       } else {
-        // Odd one out converted to Solo
-        pairedList.push({ payload: teamAttendees[i], assignedCategory: 'SOLO', teamIdentifier: null });
+        pairedList.push({ payload: ungroupedTeam[i], assignedCategory: 'SOLO', teamIdentifier: null });
       }
     }
 
