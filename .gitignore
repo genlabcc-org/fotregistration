@@ -39,3 +39,4 @@ uploads/*
 !uploads/passes/
 uploads/passes/*
 !uploads/passes/.gitkeep
+cookies.txt
