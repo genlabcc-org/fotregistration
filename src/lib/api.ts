@@ -111,6 +111,12 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  cancelRazorpayOrder: (payload: { registrationId?: string; order_id?: string }) =>
+    request<{ success: boolean }>('/api/payment/cancel-order', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).catch(() => ({ success: false })),
+
   // Legacy Public Registration Submission (with screenshot)
   submitRegistration: (formData: FormData) =>
     request<{ success: boolean; registrationId: string; totalAmount: number; message: string }>('/api/registrations', {

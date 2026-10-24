@@ -68,6 +68,19 @@ export const StepPaymentRazorpay: React.FC<StepPaymentRazorpayProps> = ({
 
       // 3. If keys are not configured or simulated in dev mode
       if (!razorpayConfig.isConfigured || orderId.startsWith('order_sim_')) {
+        const confirmSim = window.confirm(
+          'Razorpay API keys are not configured on the backend server. Would you like to proceed with a simulated test registration?'
+        );
+
+        if (!confirmSim) {
+          setIsProcessing(false);
+          setError('Payment cancelled. No registration was created.');
+          if (order.registrationId) {
+            api.cancelRazorpayOrder({ registrationId: order.registrationId, order_id: orderId });
+          }
+          return;
+        }
+
         setIsVerifying(true);
         // Simulate successful payment verification for testing
         const verifyRes = await api.verifyRazorpayPayment({
@@ -118,7 +131,11 @@ export const StepPaymentRazorpay: React.FC<StepPaymentRazorpayProps> = ({
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
-            setError('Payment cancelled by user. You can try again whenever you are ready.');
+            setIsVerifying(false);
+            setError('Payment was cancelled. Your registration was not completed and you have not been charged.');
+            if (order.registrationId) {
+              api.cancelRazorpayOrder({ registrationId: order.registrationId, order_id: orderId });
+            }
           },
           escape: true,
           backdropclose: false,
@@ -157,8 +174,12 @@ export const StepPaymentRazorpay: React.FC<StepPaymentRazorpayProps> = ({
       const rzp = new window.Razorpay(options as any);
       rzp.on('payment.failed', (failResp: any) => {
         console.error('Payment failed:', failResp);
-        setError(failResp?.error?.description || 'Payment was unsuccessful. Please try again.');
+        setError(failResp?.error?.description || 'Payment was unsuccessful. Your registration was not completed.');
         setIsProcessing(false);
+        setIsVerifying(false);
+        if (order.registrationId) {
+          api.cancelRazorpayOrder({ registrationId: order.registrationId, order_id: orderId });
+        }
       });
       rzp.open();
     } catch (err: unknown) {
